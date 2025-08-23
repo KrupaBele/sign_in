@@ -1,27 +1,31 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, X } from 'lucide-react';
-import { useDocuments } from '../context/DocumentContext';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Upload, FileText, X } from "lucide-react";
+import { useDocuments } from "../context/DocumentContext";
+import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState('');
-  const [note, setNote] = useState('');
+  const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  
+
   const { userEmail } = useDocuments();
   const navigate = useNavigate();
 
   const handleFileSelect = (selectedFile: File) => {
-    if (selectedFile.type === 'application/pdf' || selectedFile.name.endsWith('.pdf')) {
+    if (
+      selectedFile.type === "application/pdf" ||
+      selectedFile.name.endsWith(".pdf")
+    ) {
       setFile(selectedFile);
       if (!title) {
-        setTitle(selectedFile.name.replace('.pdf', ''));
+        setTitle(selectedFile.name.replace(".pdf", ""));
       }
     } else {
-      alert('Please select a PDF file');
+      alert("Please select a PDF file");
     }
   };
 
@@ -36,28 +40,32 @@ const DocumentUpload = () => {
 
   const handleUpload = async () => {
     if (!file || !title) {
-      alert('Please select a file and enter a title');
+      alert("Please select a file and enter a title");
       return;
     }
 
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append('document', file);
-      formData.append('title', title);
-      formData.append('ownerEmail', userEmail);
-      formData.append('note', note);
+      formData.append("document", file);
+      formData.append("title", title);
+      formData.append("ownerEmail", userEmail);
+      formData.append("note", note);
 
-      const response = await axios.post('http://localhost:3001/api/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await axios.post(
+        `${API_URL}/api/documents/upload`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       if (response.data.success) {
         navigate(`/document/${response.data.document.id}`);
       }
     } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Failed to upload document');
+      console.error("Upload failed:", error);
+      alert("Failed to upload document");
     } finally {
       setUploading(false);
     }
@@ -66,17 +74,19 @@ const DocumentUpload = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm border p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Upload Document</h1>
-        
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+          Upload Document
+        </h1>
+
         <div className="space-y-6">
           {/* File Upload Area */}
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragOver
-                ? 'border-blue-400 bg-blue-50'
+                ? "border-blue-400 bg-blue-50"
                 : file
-                ? 'border-green-400 bg-green-50'
-                : 'border-gray-300 hover:border-gray-400'
+                ? "border-green-400 bg-green-50"
+                : "border-gray-300 hover:border-gray-400"
             }`}
             onDrop={handleDrop}
             onDragOver={(e) => {
@@ -89,8 +99,12 @@ const DocumentUpload = () => {
               <div className="flex items-center justify-center space-x-4">
                 <FileText className="h-8 w-8 text-green-600" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                  <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
                 <button
                   onClick={() => setFile(null)}
@@ -103,7 +117,7 @@ const DocumentUpload = () => {
               <div>
                 <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg font-medium text-gray-900 mb-2">
-                  Drop your PDF here, or{' '}
+                  Drop your PDF here, or{" "}
                   <label className="text-blue-600 cursor-pointer hover:text-blue-700">
                     browse
                     <input
@@ -117,7 +131,9 @@ const DocumentUpload = () => {
                     />
                   </label>
                 </p>
-                <p className="text-sm text-gray-500">Only PDF files are supported</p>
+                <p className="text-sm text-gray-500">
+                  Only PDF files are supported
+                </p>
               </div>
             )}
           </div>

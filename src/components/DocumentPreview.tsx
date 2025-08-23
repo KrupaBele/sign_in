@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import SignatureCanvas from "./SignatureCanvas";
 import { useDocuments } from "../context/DocumentContext";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -42,7 +43,7 @@ const DocumentPreview = () => {
   const fetchDocument = async (documentId: string) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/documents/${documentId}`
+        `${API_URL}/api/documents/${documentId}`
       );
       setCurrentDocument(response.data);
       setRecipients(response.data.recipients || []);
@@ -85,7 +86,7 @@ const DocumentPreview = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:3001/api/signatures/${currentDocument._id}/sign`,
+        `${API_URL}/api/signatures/${currentDocument._id}/sign`,
         {
           signerEmail: userEmail,
           signerName: "Document Owner",
@@ -130,20 +131,17 @@ const DocumentPreview = () => {
     try {
       // Update document with recipients
       await axios.put(
-        `http://localhost:3001/api/documents/${currentDocument?._id}/recipients`,
+        `${API_URL}/api/documents/${currentDocument?._id}/recipients`,
         {
           recipients,
         }
       );
 
       // Send emails
-      await axios.post(
-        `http://localhost:3001/api/email/send/${currentDocument?._id}`,
-        {
-          recipients,
-          message: sendMessage,
-        }
-      );
+      await axios.post(`${API_URL}/api/email/send/${currentDocument?._id}`, {
+        recipients,
+        message: sendMessage,
+      });
 
       alert("Document sent successfully!");
       navigate("/");
@@ -159,7 +157,7 @@ const DocumentPreview = () => {
     if (currentDocument?.status === "completed" && currentDocument?.signedUrl) {
       console.log("Downloading signed PDF via server route");
       window.open(
-        `http://localhost:3001/api/documents/download/${currentDocument._id}`,
+        `${API_URL}/api/documents/download/${currentDocument._id}`,
         "_blank"
       );
     } else if (currentDocument?.originalUrl) {
