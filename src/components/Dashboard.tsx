@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Clock, CheckCircle, Send, Eye, Trash2 } from "lucide-react";
+import {
+  FileText,
+  Clock,
+  CheckCircle,
+  Send,
+  Eye,
+  Trash2,
+  Download,
+} from "lucide-react";
 import { useDocuments } from "../context/DocumentContext";
 import axios from "axios";
-const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard = () => {
   const { documents, setDocuments, userEmail } = useDocuments();
@@ -16,7 +23,7 @@ const Dashboard = () => {
   const fetchDocuments = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/documents/user/${userEmail}`
+        `http://localhost:3001/api/documents/user/${userEmail}`
       );
       setDocuments(response.data);
     } catch (error) {
@@ -27,14 +34,47 @@ const Dashboard = () => {
   };
 
   const deleteDocument = async (documentId: string) => {
+    // Handle both _id and id fields
+    const actualId = documentId || "undefined";
+    console.log("Attempting to delete document with ID:", actualId);
+
+    if (!actualId || actualId === "undefined") {
+      console.error("Cannot delete: Document ID is undefined");
+      alert("Cannot delete document: Invalid document ID");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this document?")) {
       try {
-        await axios.delete(`${API_URL}/api/documents/${documentId}`);
-        setDocuments(documents.filter((doc) => doc.id !== documentId));
+        await axios.delete(`http://localhost:3001/api/documents/${actualId}`);
+        // Refresh the documents list after deletion
+        fetchDocuments();
       } catch (error) {
         console.error("Failed to delete document:", error);
+        alert("Failed to delete document");
       }
     }
+  };
+
+  const downloadSignedDocument = (documentId: string) => {
+    window.open(
+      `http://localhost:3001/api/documents/download/${documentId}`,
+      "_blank"
+    );
+  };
+
+  const downloadSignedDocumentSafe = (document: any) => {
+    const docId = document._id || document.id;
+    if (!docId) {
+      console.error("Document ID not found:", document);
+      alert("Unable to download: Document ID not found");
+      return;
+    }
+    console.log("Downloading signed document with ID:", docId);
+    window.open(
+      `http://localhost:3001/api/documents/download/${docId}`,
+      "_blank"
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -141,8 +181,19 @@ const Dashboard = () => {
                     >
                       <Eye className="h-4 w-4" />
                     </Link>
+                    {document.status === "completed" && document.signedUrl && (
+                      <button
+                        onClick={() => downloadSignedDocumentSafe(document)}
+                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                        title="Download Signed PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
-                      onClick={() => deleteDocument(document.id)}
+                      onClick={() =>
+                        deleteDocument(document._id || document.id)
+                      }
                       className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                       title="Delete Document"
                     >
