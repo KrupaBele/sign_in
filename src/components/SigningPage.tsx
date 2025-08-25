@@ -1065,7 +1065,6 @@ const SigningPage = () => {
       setPlaceholders(documentPlaceholders);
     } catch (error) {
       console.error("Failed to fetch signing data:", error);
-      alert("Failed to load document. Please check the link and try again.");
     } finally {
       setLoading(false);
     }
@@ -1161,12 +1160,29 @@ const SigningPage = () => {
   const removeSignature = async (signatureIndex: number) => {
     if (!document || signed) return;
 
+    if (!window.confirm("Are you sure you want to delete this signature?")) {
+      return;
+    }
+
     try {
-      // For now, we'll just refresh the document
-      // In a full implementation, you'd want a delete signature API
-      fetchSigningData();
+      const response = await axios.delete(
+        `${API_URL}/api/signatures/${document._id}/signature/${signatureIndex}`,
+        {
+          data: { signerEmail: email },
+        }
+      );
+
+      if (response.data.success) {
+        setDocument(response.data.document);
+        // Refresh the document to show updated state
+        fetchSigningData();
+      }
     } catch (error) {
-      console.error("Failed to remove signature:", error);
+      console.error("Failed to delete signature:", error);
+      alert(
+        "Failed to delete signature: " +
+          (error.response?.data?.error || error.message)
+      );
     }
   };
 
@@ -1449,36 +1465,52 @@ const SigningPage = () => {
                             sig.position?.page === index &&
                             sig.signerEmail === email
                         )
-                        .map((signature: any, sigIndex: number) => (
-                          <div
-                            key={sigIndex}
-                            className="absolute border-2 border-green-400 bg-green-50 rounded p-1 group"
-                            style={{
-                              left: signature.position.x * zoom - 60 * zoom,
-                              top: signature.position.y * zoom - 20 * zoom,
-                              width: `${120 * zoom}px`,
-                              height: `${40 * zoom}px`,
-                            }}
-                          >
-                            <img
-                              src={signature.signatureData}
-                              alt="Signature"
-                              className="w-full h-full object-contain"
-                            />
-                            <p className="text-xs text-green-700 text-center mt-1 leading-none">
-                              {signature.signerName}
-                            </p>
-                            {!signed && (
-                              <button
-                                onClick={() => removeSignature(sigIndex)}
-                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                title="Remove signature"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </div>
-                        ))}
+                        .map((signature: any, sigIndex: number) => {
+                          // Find the actual index in the full signatures array
+                          const actualSignatureIndex =
+                            document.signatures.findIndex(
+                              (s: any) =>
+                                s.signerEmail === signature.signerEmail &&
+                                s.signatureData === signature.signatureData &&
+                                s.position?.page === signature.position?.page &&
+                                s.position?.x === signature.position?.x &&
+                                s.position?.y === signature.position?.y
+                            );
+
+                          return (
+                            <div
+                              key={sigIndex}
+                              className="absolute border-2 border-green-400 bg-green-50 rounded p-1 group"
+                              style={{
+                                left: signature.position.x * zoom - 60 * zoom,
+                                top: signature.position.y * zoom - 20 * zoom,
+                                width: `${120 * zoom}px`,
+                                height: `${40 * zoom}px`,
+                              }}
+                            >
+                              <img
+                                src={signature.signatureData}
+                                alt="Signature"
+                                className="w-full h-full object-contain"
+                              />
+                              <p className="text-xs text-green-700 text-center mt-1 leading-none">
+                                {signature.signerName}
+                              </p>
+                              {!signed && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeSignature(actualSignatureIndex);
+                                  }}
+                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                  title="Remove signature"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
                 ))}

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './components/Dashboard';
-import DocumentUpload from './components/DocumentUpload';
-import DocumentPreview from './components/DocumentPreview';
-import SigningPage from './components/SigningPage';
-import Header from './components/Header';
-import { DocumentProvider } from './context/DocumentContext';
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Dashboard from "./components/Dashboard";
+import DocumentUpload from "./components/DocumentUpload";
+import DocumentPreview from "./components/DocumentPreview";
+import SigningPage from "./components/SigningPage";
+import DocumentBuilder from "./components/DocumentBuilder";
+import Header from "./components/Header";
+import { DocumentProvider } from "./context/DocumentContext";
 
 function App() {
   return (
@@ -17,8 +18,12 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/upload" element={<DocumentUpload />} />
+              <Route path="/create" element={<DocumentBuilder />} />
               <Route path="/document/:id" element={<DocumentPreview />} />
-              <Route path="/sign/:documentId/:email" element={<SigningPage />} />
+              <Route
+                path="/sign/:documentId/:email"
+                element={<SigningPage />}
+              />
             </Routes>
           </main>
         </div>

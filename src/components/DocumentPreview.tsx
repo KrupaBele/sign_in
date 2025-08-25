@@ -1278,6 +1278,7 @@ import SignatureCanvas from "./SignatureCanvas";
 import { useDocuments } from "../context/DocumentContext";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
+
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -1499,6 +1500,38 @@ const DocumentPreview = () => {
     }
   };
 
+  const deleteSignature = async (signatureIndex: number) => {
+    if (
+      !currentDocument ||
+      !window.confirm("Are you sure you want to delete this signature?")
+    ) {
+      return;
+    }
+
+    try {
+      const response = await axios.delete(
+        `${API_URL}/api/signatures/${currentDocument._id}/signature/${signatureIndex}`,
+        {
+          data: { signerEmail: userEmail },
+        }
+      );
+
+      if (response.data.success) {
+        setCurrentDocument(response.data.document);
+        // Refresh the document to show updated state
+        if (id) {
+          fetchDocument(id);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to delete signature:", error);
+      alert(
+        "Failed to delete signature: " +
+          (error.response?.data?.error || error.message)
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1706,7 +1739,7 @@ const DocumentPreview = () => {
                           .map((signature: any, sigIndex: number) => (
                             <div
                               key={sigIndex}
-                              className="absolute pointer-events-none border-2 border-blue-300 bg-blue-50 rounded p-1"
+                              className="absolute border-2 border-blue-300 bg-blue-50 rounded p-1 group"
                               style={{
                                 left: signature.position.x * zoom - 60 * zoom,
                                 top: signature.position.y * zoom - 20 * zoom,
@@ -1722,6 +1755,19 @@ const DocumentPreview = () => {
                               <p className="text-xs text-blue-700 text-center mt-1 leading-none">
                                 {signature.signerName}
                               </p>
+                              {signature.signerEmail === userEmail &&
+                                currentDocument.status === "draft" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteSignature(sigIndex);
+                                    }}
+                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                    title="Delete signature"
+                                  >
+                                    ×
+                                  </button>
+                                )}
                             </div>
                           ))}
                       </div>

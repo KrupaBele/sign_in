@@ -8,6 +8,7 @@ import {
   Eye,
   Trash2,
   Download,
+  Plus,
 } from "lucide-react";
 import { useDocuments } from "../context/DocumentContext";
 import axios from "axios";
@@ -106,13 +107,22 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Document Dashboard</h1>
-        <Link
-          to="/upload"
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-        >
-          <FileText className="h-4 w-4" />
-          <span>New Document</span>
-        </Link>
+        <div className="flex items-center space-x-3">
+          <Link
+            to="/create"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Document</span>
+          </Link>
+          <Link
+            to="/upload"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <FileText className="h-4 w-4" />
+            <span>Upload Document</span>
+          </Link>
+        </div>
       </div>
 
       {documents.length === 0 ? (
@@ -124,13 +134,22 @@ const Dashboard = () => {
           <p className="text-gray-500 mb-4">
             Get started by uploading your first document for signing.
           </p>
-          <Link
-            to="/upload"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
-          >
-            <FileText className="h-4 w-4" />
-            <span>Upload Document</span>
-          </Link>
+          <div className="flex items-center justify-center space-x-3">
+            <Link
+              to="/create"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Document</span>
+            </Link>
+            <Link
+              to="/upload"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span>Upload Document</span>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4">
