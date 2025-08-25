@@ -45,7 +45,7 @@
 //   const fetchSigningData = async () => {
 //     try {
 //       const response = await axios.get(
-//         `http://localhost:3001/api/signatures/sign/${documentId}/${email}`
+//         `${API_URL}/api/signatures/sign/${documentId}/${email}`
 //       );
 //       setDocument(response.data.document);
 //       setRecipient(response.data.recipient);
@@ -110,7 +110,7 @@
 //     setFinishing(true);
 //     try {
 //       const response = await axios.post(
-//         `http://localhost:3001/api/signatures/${documentId}/sign`,
+//         `${API_URL}/api/signatures/${documentId}/sign`,
 //         {
 //           signerEmail: email,
 //           signerName: recipient.name,
@@ -126,7 +126,7 @@
 //         // If all signatures are complete, send notifications
 //         if (response.data.allSigned) {
 //           await axios.post(
-//             `http://localhost:3001/api/email/notify-completion/${documentId}`
+//             `${API_URL}/api/email/notify-completion/${documentId}`
 //           );
 //         }
 //       }
@@ -154,7 +154,7 @@
 //     if (document?._id) {
 //       // Use the server download route
 //       window.open(
-//         `http://localhost:3001/api/documents/download/${document._id}`,
+//         `${API_URL}/api/documents/download/${document._id}`,
 //         "_blank"
 //       );
 //     } else {
@@ -526,7 +526,7 @@
 //   const fetchSigningData = async () => {
 //     try {
 //       const response = await axios.get(
-//         `http://localhost:3001/api/signatures/sign/${documentId}/${email}`
+//         `${API_URL}/api/signatures/sign/${documentId}/${email}`
 //       );
 //       setDocument(response.data.document);
 //       setRecipient(response.data.recipient);
@@ -602,7 +602,7 @@
 //     setFinishing(true);
 //     try {
 //       const response = await axios.post(
-//         `http://localhost:3001/api/signatures/${documentId}/sign`,
+//         `${API_URL}/api/signatures/${documentId}/sign`,
 //         {
 //           signerEmail: email,
 //           signerName: recipient.name,
@@ -618,7 +618,7 @@
 //         // If all signatures are complete, send notifications
 //         if (response.data.allSigned) {
 //           await axios.post(
-//             `http://localhost:3001/api/email/notify-completion/${documentId}`
+//             `${API_URL}/api/email/notify-completion/${documentId}`
 //           );
 //         }
 //       }
@@ -646,7 +646,7 @@
 //     if (document?._id) {
 //       // Use the server download route
 //       window.open(
-//         `http://localhost:3001/api/documents/download/${document._id}`,
+//         `${API_URL}/api/documents/download/${document._id}`,
 //         "_blank"
 //       );
 //     } else {
@@ -1017,6 +1017,7 @@ import {
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureCanvas from "./SignatureCanvas";
 import axios from "axios";
+const API_URL = process.env.VITE_API_URL;
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -1052,7 +1053,7 @@ const SigningPage = () => {
   const fetchSigningData = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/signatures/sign/${documentId}/${email}`
+        `${API_URL}/api/signatures/sign/${documentId}/${email}`
       );
       console.log("Fetched signing data:", response.data);
       setDocument(response.data.document);
@@ -1133,7 +1134,7 @@ const SigningPage = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:3001/api/signatures/${document._id}/add-signature`,
+        `${API_URL}/api/signatures/${document._id}/add-signature`,
         {
           signerEmail: email,
           signerName: recipient.name,
@@ -1183,7 +1184,7 @@ const SigningPage = () => {
     try {
       // Complete the signing process for this recipient
       const response = await axios.post(
-        `http://localhost:3001/api/signatures/${document._id}/complete-signing`,
+        `${API_URL}/api/signatures/${document._id}/complete-signing`,
         {
           signerEmail: email,
         }
@@ -1197,7 +1198,7 @@ const SigningPage = () => {
         // If all recipients have signed, send completion notification
         if (response.data.allSigned) {
           await axios.post(
-            `http://localhost:3001/api/email/notify-completion/${document._id}`
+            `${API_URL}/api/email/notify-completion/${document._id}`
           );
         }
       }
@@ -1225,7 +1226,7 @@ const SigningPage = () => {
     if (document?._id) {
       // Use the server download route
       window.open(
-        `http://localhost:3001/api/documents/download/${document._id}`,
+        `${API_URL}/api/documents/download/${document._id}`,
         "_blank"
       );
     } else {

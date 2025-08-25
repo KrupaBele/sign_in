@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useDocuments } from "../context/DocumentContext";
 import axios from "axios";
+const API_URL = process.env.VITE_API_URL;
 
 const Dashboard = () => {
   const { documents, setDocuments, userEmail } = useDocuments();
@@ -23,7 +24,7 @@ const Dashboard = () => {
   const fetchDocuments = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/documents/user/${userEmail}`
+        `${API_URL}/api/documents/user/${userEmail}`
       );
       setDocuments(response.data);
     } catch (error) {
@@ -46,7 +47,7 @@ const Dashboard = () => {
 
     if (window.confirm("Are you sure you want to delete this document?")) {
       try {
-        await axios.delete(`http://localhost:3001/api/documents/${actualId}`);
+        await axios.delete(`${API_URL}/api/documents/${actualId}`);
         // Refresh the documents list after deletion
         fetchDocuments();
       } catch (error) {
@@ -57,10 +58,7 @@ const Dashboard = () => {
   };
 
   const downloadSignedDocument = (documentId: string) => {
-    window.open(
-      `http://localhost:3001/api/documents/download/${documentId}`,
-      "_blank"
-    );
+    window.open(`${API_URL}/api/documents/download/${documentId}`, "_blank");
   };
 
   const downloadSignedDocumentSafe = (document: any) => {
@@ -71,10 +69,7 @@ const Dashboard = () => {
       return;
     }
     console.log("Downloading signed document with ID:", docId);
-    window.open(
-      `http://localhost:3001/api/documents/download/${docId}`,
-      "_blank"
-    );
+    window.open(`${API_URL}/api/documents/download/${docId}`, "_blank");
   };
 
   const getStatusIcon = (status: string) => {
