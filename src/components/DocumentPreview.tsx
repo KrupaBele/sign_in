@@ -1516,8 +1516,8 @@ const DocumentPreview = () => {
 
   const deleteSignature = async (signatureIndex: number) => {
     if (
-      !currentDocument ||
-      !window.confirm("Are you sure you want to delete this signature?")
+      !currentDocument
+      // !window.confirm("Are you sure you want to delete this signature?")
     ) {
       return;
     }

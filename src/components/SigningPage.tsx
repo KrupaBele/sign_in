@@ -1172,9 +1172,9 @@ const SigningPage = () => {
   const removeSignature = async (signatureIndex: number) => {
     if (!document || signed) return;
 
-    if (!window.confirm("Are you sure you want to delete this signature?")) {
-      return;
-    }
+    // if (!window.confirm("Are you sure you want to delete this signature?")) {
+    //   return;
+    // }
 
     try {
       const response = await axios.delete(
