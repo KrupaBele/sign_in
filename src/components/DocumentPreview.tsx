@@ -1288,6 +1288,18 @@ interface Recipient {
   status: "pending" | "sent" | "signed";
 }
 
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return isMobile;
+};
+
 const DocumentPreview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1311,6 +1323,8 @@ const DocumentPreview = () => {
   const [pdfError, setPdfError] = useState(false);
   const [zoom, setZoom] = useState(1.0);
   const baseWidth = 600; // Base width for coordinate calculations
+
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (id) {
@@ -1430,7 +1444,7 @@ const DocumentPreview = () => {
   };
 
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.25, 3.0));
+    setZoom((prev) => Math.min(prev + 0.25, isMobile ? 1.0 : 1.5));
   };
 
   const handleZoomOut = () => {
@@ -1660,7 +1674,10 @@ const DocumentPreview = () => {
                 </div>
               </div>
             ) : (
-              <div className="max-h-[800px] overflow-y-auto">
+              <div
+                className="max-h-[800px] overflow-y-auto"
+                style={isMobile ? { width: "600px" } : {}}
+              >
                 <Document
                   file={currentDocument.originalUrl}
                   onLoadSuccess={onDocumentLoadSuccess}

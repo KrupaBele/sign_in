@@ -1019,6 +1019,18 @@ import SignatureCanvas from "./SignatureCanvas";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return isMobile;
+};
+
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -1227,7 +1239,7 @@ const SigningPage = () => {
   };
 
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.25, 3.0));
+    setZoom((prev) => Math.min(prev + 0.25, isMobile ? 1.0 : 1.5));
   };
 
   const handleZoomOut = () => {
@@ -1237,6 +1249,7 @@ const SigningPage = () => {
   const handleResetZoom = () => {
     setZoom(1.0);
   };
+  const isMobile = useIsMobile();
 
   const downloadSignedDocument = () => {
     if (document?._id) {
@@ -1371,7 +1384,10 @@ const SigningPage = () => {
         </div>
 
         {/* Document Preview - All Pages Scrollable */}
-        <div className="border rounded-lg overflow-hidden bg-gray-100 mb-6">
+        <div
+          className="border rounded-lg overflow-hidden bg-gray-100 mb-6"
+          style={isMobile ? { width: "600px" } : {}}
+        >
           {pdfError ? (
             <div className="w-full h-96 flex items-center justify-center bg-gray-50">
               <div className="text-center">
