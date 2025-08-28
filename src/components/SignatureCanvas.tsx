@@ -64,9 +64,8 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // Fill with white background
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas with transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // If in type mode and has typed signature, render it
     if (signatureMode === "type" && typedSignature) {
@@ -81,9 +80,8 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas with transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Set font and color
     ctx.fillStyle = signatureColor;
@@ -168,8 +166,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       setHasSignature(false);
       setTypedSignature("");
     }
@@ -300,7 +297,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           ref={canvasRef}
           width={400}
           height={150}
-          className={`border border-gray-300 rounded-md bg-white mx-auto block touch-none ${
+          className={`border border-gray-300 rounded-md bg-gray-50 mx-auto block touch-none ${
             signatureMode === "draw" ? "cursor-crosshair" : "cursor-default"
           }`}
           onMouseDown={startDrawing}
