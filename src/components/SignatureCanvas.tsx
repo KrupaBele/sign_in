@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Trash2, Check, X, Palette, Type, Edit3 } from "lucide-react";
+import { Trash2, Check, X, Palette, Type, Edit3, Loader2 } from "lucide-react";
 
 interface SignatureCanvasProps {
   onSignatureComplete: (signatureData: string) => void;
@@ -17,6 +17,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   const [signatureColor, setSignatureColor] = useState("#1e40af");
   const [typedSignature, setTypedSignature] = useState("");
   const [selectedFont, setSelectedFont] = useState("Dancing Script");
+  const [isPlacing, setIsPlacing] = useState(false);
 
   const colors = [
     { name: "Blue", value: "#1e40af" },
@@ -184,7 +185,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   const saveSignature = () => {
     const canvas = canvasRef.current;
     if (!canvas || !hasSignature) return;
-
+    setIsPlacing(true);
     const signatureData = canvas.toDataURL("image/png", 1.0);
     console.log("Signature saved, data URL length:", signatureData.length);
     onSignatureComplete(signatureData);
@@ -334,8 +335,17 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
             disabled={!hasSignature}
             className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
           >
-            <Check className="h-4 w-4" />
-            <span>Place Signature</span>
+            {isPlacing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Placing...</span>
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                <span>Place Signature</span>
+              </>
+            )}
           </button>
         </div>
       </div>
