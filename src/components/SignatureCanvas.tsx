@@ -300,6 +300,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           className={`border border-gray-300 rounded-md bg-gray-50 mx-auto block touch-none ${
             signatureMode === "draw" ? "cursor-crosshair" : "cursor-default"
           }`}
+          style={{ width: "100%", height: "150px" }}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
