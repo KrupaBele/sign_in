@@ -5,6 +5,8 @@ import DocumentUpload from "./components/DocumentUpload";
 import DocumentPreview from "./components/DocumentPreview";
 import SigningPage from "./components/SigningPage";
 import DocumentBuilder from "./components/DocumentBuilder";
+import Templates from "./components/Templates";
+import TemplateEditor from "./components/TemplateEditor";
 import Header from "./components/Header";
 import { DocumentProvider } from "./context/DocumentContext";
 
@@ -19,6 +21,8 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/upload" element={<DocumentUpload />} />
               <Route path="/create" element={<DocumentBuilder />} />
+              <Route path="/templates" element={<Templates />} />
+              <Route path="/template/:id" element={<TemplateEditor />} />
               <Route path="/document/:id" element={<DocumentPreview />} />
               <Route
                 path="/sign/:documentId/:email"

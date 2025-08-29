@@ -1,6 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FileSignature, Home, Upload, Plus } from "lucide-react";
+import {
+  FileSignature,
+  Home,
+  Upload,
+  Plus,
+  BookTemplate as FileTemplate,
+} from "lucide-react";
 
 const Header = () => {
   const location = useLocation();
@@ -53,6 +59,18 @@ const Header = () => {
             >
               <Plus className="h-4 w-4" />
               <span>Create</span>
+            </Link>
+
+            <Link
+              to="/templates"
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/templates")
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
+            >
+              <FileTemplate className="h-4 w-4" />
+              <span>Templates</span>
             </Link>
           </nav>
         </div>
