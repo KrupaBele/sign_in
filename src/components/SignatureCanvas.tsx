@@ -287,7 +287,6 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
         </div>
       )}
 
-      {/* Canvas */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
         <p className="text-sm text-gray-600 text-center mb-4">
           {signatureMode === "draw"
