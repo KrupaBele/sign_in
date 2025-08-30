@@ -1272,6 +1272,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Move,
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureCanvas from "./SignatureCanvas";
@@ -1287,7 +1288,6 @@ interface Recipient {
   email: string;
   status: "pending" | "sent" | "signed";
 }
-
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -1322,6 +1322,8 @@ const DocumentPreview = () => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pdfError, setPdfError] = useState(false);
   const [zoom, setZoom] = useState(1.0);
+  const [draggedSignature, setDraggedSignature] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const baseWidth = 600; // Base width for coordinate calculations
 
   const isMobile = useIsMobile();
@@ -1453,6 +1455,84 @@ const DocumentPreview = () => {
 
   const handleResetZoom = () => {
     setZoom(1.0);
+  };
+
+  const handleSignatureDragStart = (
+    e: React.DragEvent,
+    signatureIndex: number,
+    signature: any
+  ) => {
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedSignature(signatureIndex);
+
+    // Calculate offset from signature center to mouse position
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const offsetX = e.clientX - rect.left - rect.width / 2;
+    const offsetY = e.clientY - rect.top - rect.height / 2;
+    setDragOffset({ x: offsetX, y: offsetY });
+  };
+
+  const handleSignatureDragEnd = () => {
+    setDraggedSignature(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  const handlePageDrop = async (e: React.DragEvent, pageNumber: number) => {
+    e.preventDefault();
+
+    if (draggedSignature === null || !currentDocument) return;
+
+    const pageElement = e.currentTarget;
+    const rect = pageElement.getBoundingClientRect();
+
+    // Calculate drop position accounting for drag offset
+    const dropX = e.clientX - rect.left - dragOffset.x;
+    const dropY = e.clientY - rect.top - dragOffset.y;
+
+    // Convert to base coordinates
+    const x = dropX / zoom;
+    const y = dropY / zoom;
+
+    console.log("Signature dropped at:", { x, y, page: pageNumber - 1 });
+
+    try {
+      // Update signature position
+      const updatedDocument = { ...currentDocument };
+      if (
+        updatedDocument.signatures &&
+        updatedDocument.signatures[draggedSignature]
+      ) {
+        updatedDocument.signatures[draggedSignature].position = {
+          x,
+          y,
+          page: pageNumber - 1,
+        };
+
+        // Update in database
+        const response = await axios.put(
+          `${API_URL}/api/signatures/${currentDocument._id}/update-position`,
+          {
+            signatureIndex: draggedSignature,
+            position: { x, y, page: pageNumber - 1 },
+            signerEmail: userEmail,
+          }
+        );
+
+        if (response.data.success) {
+          setCurrentDocument(response.data.document);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to update signature position:", error);
+      alert("Failed to update signature position");
+    }
+
+    setDraggedSignature(null);
+  };
+
+  const handlePageDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
   };
 
   const addRecipient = () => {
@@ -1698,6 +1778,8 @@ const DocumentPreview = () => {
                           placeholderMode ? "cursor-copy" : "cursor-crosshair"
                         }`}
                         onClick={(e) => handlePageClick(e, index + 1)}
+                        onDrop={(e) => handlePageDrop(e, index + 1)}
+                        onDragOver={handlePageDragOver}
                       >
                         <Page
                           pageNumber={index + 1}
@@ -1753,40 +1835,76 @@ const DocumentPreview = () => {
                         {/* Existing signatures overlay for this page */}
                         {currentDocument.signatures
                           ?.filter((sig: any) => sig.position?.page === index)
-                          .map((signature: any, sigIndex: number) => (
-                            <div
-                              key={sigIndex}
-                              className="absolute border-2 border-blue-300 bg-blue-50 rounded p-1 group"
-                              style={{
-                                left: signature.position.x * zoom - 60 * zoom,
-                                top: signature.position.y * zoom - 20 * zoom,
-                                width: `${120 * zoom}px`,
-                                height: `${40 * zoom}px`,
-                              }}
-                            >
-                              <img
-                                src={signature.signatureData}
-                                alt="Signature"
-                                className="w-full h-full object-contain"
-                              />
-                              <p className="text-xs text-blue-700 text-center mt-1 leading-none">
-                                {signature.signerName}
-                              </p>
-                              {signature.signerEmail === userEmail &&
-                                currentDocument.status === "draft" && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteSignature(sigIndex);
-                                    }}
-                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                    title="Delete signature"
-                                  >
-                                    ×
-                                  </button>
-                                )}
-                            </div>
-                          ))}
+                          .map((signature: any, sigIndex: number) => {
+                            const actualSignatureIndex =
+                              currentDocument.signatures?.findIndex(
+                                (s: any) => s === signature
+                              ) || 0;
+                            const isDragging =
+                              draggedSignature === actualSignatureIndex;
+                            return (
+                              <div
+                                key={sigIndex}
+                                className={`absolute border-2 border-blue-300 bg-blue-50 rounded p-1 group cursor-move transition-all ${
+                                  isDragging
+                                    ? "opacity-50 scale-110 z-50"
+                                    : "hover:shadow-lg"
+                                }`}
+                                style={{
+                                  left: signature.position.x * zoom - 60 * zoom,
+                                  top: signature.position.y * zoom - 20 * zoom,
+                                  width: `${120 * zoom}px`,
+                                  height: `${40 * zoom}px`,
+                                }}
+                                draggable={
+                                  signature.signerEmail === userEmail &&
+                                  currentDocument.status === "draft"
+                                }
+                                onDragStart={(e) =>
+                                  handleSignatureDragStart(
+                                    e,
+                                    actualSignatureIndex,
+                                    signature
+                                  )
+                                }
+                                onDragEnd={handleSignatureDragEnd}
+                                title={
+                                  signature.signerEmail === userEmail &&
+                                  currentDocument.status === "draft"
+                                    ? "Drag to reposition"
+                                    : ""
+                                }
+                              >
+                                {signature.signerEmail === userEmail &&
+                                  currentDocument.status === "draft" && (
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Move className="h-2 w-2" />
+                                    </div>
+                                  )}
+                                <img
+                                  src={signature.signatureData}
+                                  alt="Signature"
+                                  className="w-full h-full object-contain"
+                                />
+                                <p className="text-xs text-blue-700 text-center mt-1 leading-none">
+                                  {signature.signerName}
+                                </p>
+                                {signature.signerEmail === userEmail &&
+                                  currentDocument.status === "draft" && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteSignature(sigIndex);
+                                      }}
+                                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                      title="Delete signature"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                              </div>
+                            );
+                          })}
                       </div>
                     </div>
                   ))}
@@ -1819,7 +1937,7 @@ const DocumentPreview = () => {
           {!placeholderMode && (
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-700 font-medium mb-2">
-                How to sign:
+                How to sign and position signatures:
               </p>
               <ol className="text-sm text-blue-600 space-y-1">
                 <li>
@@ -1832,7 +1950,12 @@ const DocumentPreview = () => {
                 <li>3. Draw your signature in the popup canvas</li>
                 <li>4. Click "Sign Document" to save your signature</li>
                 <li>
-                  5. The signature will appear at the exact position you clicked
+                  5. <strong>Drag signatures</strong> to reposition them before
+                  sending
+                </li>
+                <li>
+                  6. The signature will appear at the exact position in the
+                  downloaded PDF
                 </li>
               </ol>
             </div>

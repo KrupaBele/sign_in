@@ -59,16 +59,16 @@
     touch-action: none;
 }
 
-/* Draggable signature styles */
-.signature-draggable {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+/* Drag and drop styles */
+.signature-dragging {
+    opacity: 0.5;
+    transform: scale(1.1);
+    z-index: 1000;
 }
 
-.signature-draggable:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.drop-zone-active {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
 }
 
 /* Loading animation */

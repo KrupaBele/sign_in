@@ -1013,6 +1013,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Move,
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureCanvas from "./SignatureCanvas";
@@ -1054,6 +1055,8 @@ const SigningPage = () => {
   const [placeholders, setPlaceholders] = useState<
     Array<{ x: number; y: number; page: number }>
   >([]);
+  const [draggedSignature, setDraggedSignature] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const baseWidth = 600; // Base width for coordinate calculations
 
   useEffect(() => {
@@ -1251,6 +1254,71 @@ const SigningPage = () => {
   };
   const isMobile = useIsMobile();
 
+  const handleSignatureDragStart = (
+    e: React.DragEvent,
+    signatureIndex: number,
+    signature: any
+  ) => {
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedSignature(signatureIndex);
+
+    // Calculate offset from signature center to mouse position
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const offsetX = e.clientX - rect.left - rect.width / 2;
+    const offsetY = e.clientY - rect.top - rect.height / 2;
+    setDragOffset({ x: offsetX, y: offsetY });
+  };
+
+  const handleSignatureDragEnd = () => {
+    setDraggedSignature(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  const handlePageDrop = async (e: React.DragEvent, pageNumber: number) => {
+    e.preventDefault();
+
+    if (draggedSignature === null || !document) return;
+
+    const pageElement = e.currentTarget;
+    const rect = pageElement.getBoundingClientRect();
+
+    // Calculate drop position accounting for drag offset
+    const dropX = e.clientX - rect.left - dragOffset.x;
+    const dropY = e.clientY - rect.top - dragOffset.y;
+
+    // Convert to base coordinates
+    const x = dropX / zoom;
+    const y = dropY / zoom;
+
+    console.log("Signature dropped at:", { x, y, page: pageNumber - 1 });
+
+    try {
+      // Update signature position
+      const response = await axios.put(
+        `${API_URL}/api/signatures/${document._id}/update-position`,
+        {
+          signatureIndex: draggedSignature,
+          position: { x, y, page: pageNumber - 1 },
+          signerEmail: email,
+        }
+      );
+
+      if (response.data.success) {
+        setDocument(response.data.document);
+      }
+    } catch (error) {
+      console.error("Failed to update signature position:", error);
+      alert("Failed to update signature position");
+    }
+
+    setDraggedSignature(null);
+  };
+
+  const handlePageDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
   const downloadSignedDocument = () => {
     if (document?._id) {
       // Use the server download route
@@ -1427,6 +1495,8 @@ const SigningPage = () => {
                           : ""
                       } transition-shadow`}
                       onClick={(e) => handlePageClick(e, index + 1)}
+                      onDrop={(e) => handlePageDrop(e, index + 1)}
+                      onDragOver={handlePageDragOver}
                     >
                       <Page
                         pageNumber={index + 1}
@@ -1493,17 +1563,41 @@ const SigningPage = () => {
                                 s.position?.y === signature.position?.y
                             );
 
+                          const isDragging =
+                            draggedSignature === actualSignatureIndex;
+
                           return (
                             <div
                               key={sigIndex}
-                              className="absolute border-2 border-green-400 bg-green-50 rounded p-1 group"
+                              className={`absolute border-2 border-green-400 bg-green-50 rounded p-1 group cursor-move transition-all ${
+                                isDragging
+                                  ? "opacity-50 scale-110 z-50"
+                                  : "hover:shadow-lg"
+                              }`}
                               style={{
                                 left: signature.position.x * zoom - 60 * zoom,
                                 top: signature.position.y * zoom - 20 * zoom,
                                 width: `${120 * zoom}px`,
                                 height: `${40 * zoom}px`,
                               }}
+                              draggable={!signed}
+                              onDragStart={(e) =>
+                                handleSignatureDragStart(
+                                  e,
+                                  actualSignatureIndex,
+                                  signature
+                                )
+                              }
+                              onDragEnd={handleSignatureDragEnd}
+                              title={
+                                !signed ? "Drag to reposition signature" : ""
+                              }
                             >
+                              {!signed && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Move className="h-2 w-2" />
+                                </div>
+                              )}
                               <img
                                 src={signature.signatureData}
                                 alt="Signature"
@@ -1630,12 +1724,14 @@ const SigningPage = () => {
               {placeholders.length > 0 ? (
                 <p className="text-sm text-blue-600">
                   Click on the orange "Click to Sign" placeholders to place your
-                  signature, or click anywhere else on the document.
+                  signature, or click anywhere else on the document. You can
+                  drag signatures to reposition them.
                 </p>
               ) : (
                 <p className="text-sm text-blue-600">
                   Scroll through the document and click anywhere to place your
-                  signature at that location.
+                  signature at that location. You can drag signatures to
+                  reposition them.
                 </p>
               )}
             </div>
