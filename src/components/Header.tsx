@@ -6,6 +6,7 @@ import {
   Upload,
   Plus,
   BookTemplate as FileTemplate,
+    Cpu, 
 } from "lucide-react";
 
 const Header = () => {
@@ -71,6 +72,18 @@ const Header = () => {
             >
               <FileTemplate className="h-4 w-4" />
               <span>Templates</span>
+            </Link>
+            
+            <Link
+              to="/ai"
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/ai")
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
+            >
+              <Cpu className="h-4 w-4" />
+              <span>AI</span>
             </Link>
           </nav>
         </div>

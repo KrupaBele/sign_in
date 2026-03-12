@@ -9,6 +9,7 @@ import Templates from "./components/Templates";
 import TemplateEditor from "./components/TemplateEditor";
 import Header from "./components/Header";
 import { DocumentProvider } from "./context/DocumentContext";
+import AiGenerator from "./components/AiGenerator";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/create" element={<DocumentBuilder />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/template/:id" element={<TemplateEditor />} />
+              <Route path="/ai" element={<AiGenerator />} />
               <Route path="/document/:id" element={<DocumentPreview />} />
               <Route
                 path="/sign/:documentId/:email"

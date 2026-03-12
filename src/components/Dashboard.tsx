@@ -25,7 +25,7 @@ const Dashboard = () => {
   const fetchDocuments = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/documents/user/${userEmail}`
+        `${API_URL}/api/documents/user/${userEmail}`,
       );
       setDocuments(response.data);
     } catch (error) {
@@ -106,7 +106,9 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Document Dashboard</h1>
+        <h1 className="text-lg font-normal text-gray-900">
+          Document Dashboard
+        </h1>
         <div className="flex items-center space-x-3">
           <Link
             to="/create"
@@ -164,7 +166,7 @@ const Dashboard = () => {
                     <FileText className="h-8 w-8 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-sm font-normal text-gray-900">
                       {document.title}
                     </h3>
                     <p className="text-sm text-gray-500">
@@ -179,7 +181,7 @@ const Dashboard = () => {
                     {getStatusIcon(document.status)}
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        document.status
+                        document.status,
                       )}`}
                     >
                       {document.status.charAt(0).toUpperCase() +
@@ -188,13 +190,13 @@ const Dashboard = () => {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Link
+                    {/* <Link
                       to={`/document/${document.id}`}
                       className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                       title="View Document"
                     >
                       <Eye className="h-4 w-4" />
-                    </Link>
+                    </Link> */}
                     {document.status === "completed" && document.signedUrl && (
                       <button
                         onClick={() => downloadSignedDocumentSafe(document)}
