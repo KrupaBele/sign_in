@@ -231,7 +231,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           <Palette className="h-4 w-4 text-gray-600" />
           <span className="text-sm font-medium text-gray-700">Color:</span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           {colors.map((color) => (
             <button
               key={color.value}
@@ -311,20 +311,20 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
         />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           onClick={clearSignature}
           disabled={!hasSignature}
-          className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors sm:justify-start"
         >
           <Trash2 className="h-4 w-4" />
           <span>Clear</span>
         </button>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2"
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <X className="h-4 w-4" />
             <span>Cancel</span>
@@ -333,7 +333,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           <button
             onClick={saveSignature}
             disabled={!hasSignature}
-            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             {isPlacing ? (
               <>

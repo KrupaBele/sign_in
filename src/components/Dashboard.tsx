@@ -105,23 +105,23 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-lg font-normal text-gray-900">
           Document Dashboard
         </h1>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 sm:items-center sm:justify-end">
           <Link
             to="/create"
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 shrink-0" />
             <span>Create Document</span>
           </Link>
           <Link
             to="/upload"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4 shrink-0" />
             <span>Upload Document</span>
           </Link>
         </div>
@@ -136,19 +136,19 @@ const Dashboard = () => {
           <p className="text-gray-500 mb-4">
             Get started by uploading your first document for signing.
           </p>
-          <div className="flex items-center justify-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-sm mx-auto sm:max-w-none">
             <Link
               to="/create"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center gap-2"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               <span>Create Document</span>
             </Link>
             <Link
               to="/upload"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center justify-center gap-2"
             >
-              <FileText className="h-4 w-4" />
+              <FileText className="h-4 w-4 shrink-0" />
               <span>Upload Document</span>
             </Link>
           </div>
@@ -158,15 +158,15 @@ const Dashboard = () => {
           {documents.map((document) => (
             <div
               key={document.id}
-              className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg shadow-sm border p-4 sm:p-6 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                   <div className="flex-shrink-0">
                     <FileText className="h-8 w-8 text-blue-600" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-normal text-gray-900">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-normal text-gray-900 break-words">
                       {document.title}
                     </h3>
                     <p className="text-sm text-gray-500">
@@ -176,8 +176,8 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 sm:justify-end sm:shrink-0">
+                  <div className="flex items-center gap-2">
                     {getStatusIcon(document.status)}
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
@@ -189,7 +189,7 @@ const Dashboard = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     {/* <Link
                       to={`/document/${document.id}`}
                       className="p-2 text-gray-400 hover:text-blue-600 transition-colors"

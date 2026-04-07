@@ -1276,6 +1276,7 @@ import {
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureCanvas from "./SignatureCanvas";
+import { PdfPageShell, signatureOverlayStyle } from "./PdfPageShell";
 import { useDocuments } from "../context/DocumentContext";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
@@ -1359,6 +1360,17 @@ const DocumentPreview = () => {
     setPdfError(true);
   };
 
+  const getCanvasScaleFactor = (pageElement: HTMLElement) => {
+    const canvas = pageElement.querySelector("canvas");
+    if (!canvas) return 1;
+
+    const canvasRect = canvas.getBoundingClientRect();
+    if (!canvasRect.width) return 1;
+
+    // Normalize clicks/drops back to the 600px base coordinate system.
+    return (baseWidth * zoom) / canvasRect.width;
+  };
+
   const handlePageClick = (e: React.MouseEvent, pageNumber: number) => {
     if (showSignature) return;
 
@@ -1370,8 +1382,9 @@ const DocumentPreview = () => {
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
 
-      const x = clickX / zoom;
-      const y = clickY / zoom;
+      const scaleFactor = getCanvasScaleFactor(pageElement);
+      const x = (clickX * scaleFactor) / zoom;
+      const y = (clickY * scaleFactor) / zoom;
 
       const newPlaceholder = { x, y, page: pageNumber - 1 };
       setPlaceholders([...placeholders, newPlaceholder]);
@@ -1387,8 +1400,9 @@ const DocumentPreview = () => {
 
     // Convert to base coordinates by dividing by zoom level
     // This normalizes the coordinates to what they would be at 100% zoom
-    const x = clickX / zoom;
-    const y = clickY / zoom;
+    const scaleFactor = getCanvasScaleFactor(pageElement);
+    const x = (clickX * scaleFactor) / zoom;
+    const y = (clickY * scaleFactor) / zoom;
 
     console.log("Click position:", {
       clickX,
@@ -1490,8 +1504,9 @@ const DocumentPreview = () => {
     const dropY = e.clientY - rect.top - dragOffset.y;
 
     // Convert to base coordinates
-    const x = dropX / zoom;
-    const y = dropY / zoom;
+    const scaleFactor = getCanvasScaleFactor(pageElement);
+    const x = (dropX * scaleFactor) / zoom;
+    const y = (dropY * scaleFactor) / zoom;
 
     console.log("Signature dropped at:", { x, y, page: pageNumber - 1 });
 
@@ -1646,16 +1661,16 @@ const DocumentPreview = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Document Preview */}
       <div className="lg:col-span-2">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 break-words pr-0 sm:pr-4 min-w-0">
               {currentDocument.title}
             </h2>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end">
               {/* Placeholder Mode Toggle */}
               <button
                 onClick={togglePlaceholderMode}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                   placeholderMode
                     ? "bg-orange-600 text-white hover:bg-orange-700"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -1687,7 +1702,7 @@ const DocumentPreview = () => {
                 </span>
                 <button
                   onClick={handleZoomIn}
-                  disabled={zoom >= 3.0}
+                  disabled={zoom >= (isMobile ? 1.0 : 1.5)}
                   className="p-2 text-gray-600 hover:text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
                   title="Zoom In"
                 >
@@ -1704,7 +1719,7 @@ const DocumentPreview = () => {
 
               <button
                 onClick={downloadDocument}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
                 <span>Download</span>
@@ -1754,10 +1769,7 @@ const DocumentPreview = () => {
                 </div>
               </div>
             ) : (
-              <div
-                className="max-h-[800px] overflow-y-auto"
-                style={isMobile ? { width: "600px" } : {}}
-              >
+              <div className="max-h-[800px] overflow-y-auto overflow-x-auto w-full min-w-0 pdf-container">
                 <Document
                   file={currentDocument.originalUrl}
                   onLoadSuccess={onDocumentLoadSuccess}
@@ -1768,18 +1780,136 @@ const DocumentPreview = () => {
                     </div>
                   }
                 >
-                  {Array.from(new Array(numPages), (el, index) => (
+                  {Array.from(new Array(numPages), (_el, index) => (
                     <div
                       key={`page_${index + 1}`}
                       className="relative mb-4 last:mb-0"
                     >
-                      <div
+                      <PdfPageShell
+                        zoom={zoom}
                         className={`relative border border-gray-200 bg-white ${
                           placeholderMode ? "cursor-copy" : "cursor-crosshair"
                         }`}
                         onClick={(e) => handlePageClick(e, index + 1)}
                         onDrop={(e) => handlePageDrop(e, index + 1)}
                         onDragOver={handlePageDragOver}
+                        overlays={(cw) => (
+                          <>
+                            {/* Signature placeholders for this page */}
+                            {placeholders
+                              .filter((placeholder) => placeholder.page === index)
+                              .map((placeholder, placeholderIndex) => (
+                                <div
+                                  key={placeholderIndex}
+                                  className="absolute border-2 border-dashed border-orange-400 bg-orange-50 bg-opacity-80 rounded flex items-center justify-center group hover:bg-orange-100 transition-colors z-10"
+                                  style={signatureOverlayStyle(
+                                    placeholder.x,
+                                    placeholder.y,
+                                    cw,
+                                    baseWidth,
+                                    zoom
+                                  )}
+                                >
+                                  <span className="text-orange-600 text-xs font-medium pointer-events-none">
+                                    Sign Here
+                                  </span>
+                                  {placeholderMode && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const globalIndex = placeholders.findIndex(
+                                          (p) =>
+                                            p.x === placeholder.x &&
+                                            p.y === placeholder.y &&
+                                            p.page === placeholder.page
+                                        );
+                                        removePlaceholder(globalIndex);
+                                      }}
+                                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                      title="Remove placeholder"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+
+                            {/* Existing signatures overlay for this page */}
+                            {currentDocument.signatures
+                              ?.filter((sig: any) => sig.position?.page === index)
+                              .map((signature: any, sigIndex: number) => {
+                                const actualSignatureIndex =
+                                  currentDocument.signatures?.findIndex(
+                                    (s: any) => s === signature
+                                  ) || 0;
+                                const isDragging =
+                                  draggedSignature === actualSignatureIndex;
+                                return (
+                                  <div
+                                    key={sigIndex}
+                                    className={`absolute border-2 border-blue-300 bg-blue-50 rounded p-1 group cursor-move transition-all z-10 ${
+                                      isDragging
+                                        ? "opacity-50 scale-110 z-50"
+                                        : "hover:shadow-lg"
+                                    }`}
+                                    style={signatureOverlayStyle(
+                                      signature.position.x,
+                                      signature.position.y,
+                                      cw,
+                                      baseWidth,
+                                      zoom
+                                    )}
+                                    draggable={
+                                      signature.signerEmail === userEmail &&
+                                      currentDocument.status === "draft"
+                                    }
+                                    onDragStart={(e) =>
+                                      handleSignatureDragStart(
+                                        e,
+                                        actualSignatureIndex,
+                                        signature
+                                      )
+                                    }
+                                    onDragEnd={handleSignatureDragEnd}
+                                    title={
+                                      signature.signerEmail === userEmail &&
+                                      currentDocument.status === "draft"
+                                        ? "Drag to reposition"
+                                        : ""
+                                    }
+                                  >
+                                    {signature.signerEmail === userEmail &&
+                                      currentDocument.status === "draft" && (
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <Move className="h-2 w-2" />
+                                        </div>
+                                      )}
+                                    <img
+                                      src={signature.signatureData}
+                                      alt="Signature"
+                                      className="w-full h-full object-contain"
+                                    />
+                                    <p className="text-xs text-blue-700 text-center mt-1 leading-none">
+                                      {signature.signerName}
+                                    </p>
+                                    {signature.signerEmail === userEmail &&
+                                      currentDocument.status === "draft" && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteSignature(sigIndex);
+                                          }}
+                                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                          title="Delete signature"
+                                        >
+                                          ×
+                                        </button>
+                                      )}
+                                  </div>
+                                );
+                              })}
+                          </>
+                        )}
                       >
                         <Page
                           pageNumber={index + 1}
@@ -1790,122 +1920,10 @@ const DocumentPreview = () => {
                         />
 
                         {/* Page number indicator */}
-                        <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                        <div className="absolute top-2 right-2 z-20 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs pointer-events-none">
                           Page {index + 1}
                         </div>
-
-                        {/* Signature placeholders for this page */}
-                        {placeholders
-                          .filter((placeholder) => placeholder.page === index)
-                          .map((placeholder, placeholderIndex) => (
-                            <div
-                              key={placeholderIndex}
-                              className="absolute border-2 border-dashed border-orange-400 bg-orange-50 bg-opacity-80 rounded flex items-center justify-center group hover:bg-orange-100 transition-colors"
-                              style={{
-                                left: placeholder.x * zoom - 60 * zoom,
-                                top: placeholder.y * zoom - 20 * zoom,
-                                width: `${120 * zoom}px`,
-                                height: `${40 * zoom}px`,
-                              }}
-                            >
-                              <span className="text-orange-600 text-xs font-medium pointer-events-none">
-                                Sign Here
-                              </span>
-                              {placeholderMode && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const globalIndex = placeholders.findIndex(
-                                      (p) =>
-                                        p.x === placeholder.x &&
-                                        p.y === placeholder.y &&
-                                        p.page === placeholder.page
-                                    );
-                                    removePlaceholder(globalIndex);
-                                  }}
-                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                  title="Remove placeholder"
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </div>
-                          ))}
-
-                        {/* Existing signatures overlay for this page */}
-                        {currentDocument.signatures
-                          ?.filter((sig: any) => sig.position?.page === index)
-                          .map((signature: any, sigIndex: number) => {
-                            const actualSignatureIndex =
-                              currentDocument.signatures?.findIndex(
-                                (s: any) => s === signature
-                              ) || 0;
-                            const isDragging =
-                              draggedSignature === actualSignatureIndex;
-                            return (
-                              <div
-                                key={sigIndex}
-                                className={`absolute border-2 border-blue-300 bg-blue-50 rounded p-1 group cursor-move transition-all ${
-                                  isDragging
-                                    ? "opacity-50 scale-110 z-50"
-                                    : "hover:shadow-lg"
-                                }`}
-                                style={{
-                                  left: signature.position.x * zoom - 60 * zoom,
-                                  top: signature.position.y * zoom - 20 * zoom,
-                                  width: `${120 * zoom}px`,
-                                  height: `${40 * zoom}px`,
-                                }}
-                                draggable={
-                                  signature.signerEmail === userEmail &&
-                                  currentDocument.status === "draft"
-                                }
-                                onDragStart={(e) =>
-                                  handleSignatureDragStart(
-                                    e,
-                                    actualSignatureIndex,
-                                    signature
-                                  )
-                                }
-                                onDragEnd={handleSignatureDragEnd}
-                                title={
-                                  signature.signerEmail === userEmail &&
-                                  currentDocument.status === "draft"
-                                    ? "Drag to reposition"
-                                    : ""
-                                }
-                              >
-                                {signature.signerEmail === userEmail &&
-                                  currentDocument.status === "draft" && (
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                      <Move className="h-2 w-2" />
-                                    </div>
-                                  )}
-                                <img
-                                  src={signature.signatureData}
-                                  alt="Signature"
-                                  className="w-full h-full object-contain"
-                                />
-                                <p className="text-xs text-blue-700 text-center mt-1 leading-none">
-                                  {signature.signerName}
-                                </p>
-                                {signature.signerEmail === userEmail &&
-                                  currentDocument.status === "draft" && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteSignature(sigIndex);
-                                      }}
-                                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                      title="Delete signature"
-                                    >
-                                      ×
-                                    </button>
-                                  )}
-                              </div>
-                            );
-                          })}
-                      </div>
+                      </PdfPageShell>
                     </div>
                   ))}
                 </Document>
@@ -1914,8 +1932,8 @@ const DocumentPreview = () => {
 
             {/* Signature Overlay */}
             {showSignature && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto my-auto">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium">Add Your Signature</h3>
                     <button
@@ -1964,9 +1982,9 @@ const DocumentPreview = () => {
       </div>
 
       {/* Recipients Panel */}
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         {/* Add Recipients */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Recipients</h3>
 
           <div className="space-y-4">
@@ -2041,7 +2059,7 @@ const DocumentPreview = () => {
 
         {/* Placeholders Summary */}
         {placeholders.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Signature Placeholders
             </h3>
@@ -2067,7 +2085,7 @@ const DocumentPreview = () => {
           </div>
         )}
         {/* Send Message */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             Message to Recipients
           </h3>
@@ -2100,7 +2118,7 @@ const DocumentPreview = () => {
         </button>
 
         {/* Document Info */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             Document Info
           </h3>

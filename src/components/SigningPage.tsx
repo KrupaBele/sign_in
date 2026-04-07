@@ -1017,6 +1017,7 @@ import {
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureCanvas from "./SignatureCanvas";
+import { PdfPageShell, signatureOverlayStyle } from "./PdfPageShell";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -1058,6 +1059,8 @@ const SigningPage = () => {
   const [draggedSignature, setDraggedSignature] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const baseWidth = 600; // Base width for coordinate calculations
+
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (documentId && email) {
@@ -1105,6 +1108,18 @@ const SigningPage = () => {
     setSignaturePosition(placeholder);
     setShowSignature(true);
   };
+
+  const getCanvasScaleFactor = (pageElement: HTMLElement) => {
+    const canvas = pageElement.querySelector("canvas");
+    if (!canvas) return 1;
+
+    const canvasRect = canvas.getBoundingClientRect();
+    if (!canvasRect.width) return 1;
+
+    // Normalize clicks/drops back to the 600px base coordinate system.
+    return (baseWidth * zoom) / canvasRect.width;
+  };
+
   const handlePageClick = (e: React.MouseEvent, pageNumber: number) => {
     if (signed || showSignature) return;
 
@@ -1117,8 +1132,9 @@ const SigningPage = () => {
 
     // Convert to base coordinates by dividing by zoom level
     // This normalizes the coordinates to what they would be at 100% zoom
-    const x = clickX / zoom;
-    const y = clickY / zoom;
+    const scaleFactor = getCanvasScaleFactor(pageElement);
+    const x = (clickX * scaleFactor) / zoom;
+    const y = (clickY * scaleFactor) / zoom;
 
     console.log("Click position:", {
       clickX,
@@ -1252,7 +1268,6 @@ const SigningPage = () => {
   const handleResetZoom = () => {
     setZoom(1.0);
   };
-  const isMobile = useIsMobile();
 
   const handleSignatureDragStart = (
     e: React.DragEvent,
@@ -1287,8 +1302,9 @@ const SigningPage = () => {
     const dropY = e.clientY - rect.top - dragOffset.y;
 
     // Convert to base coordinates
-    const x = dropX / zoom;
-    const y = dropY / zoom;
+    const scaleFactor = getCanvasScaleFactor(pageElement);
+    const x = (dropX * scaleFactor) / zoom;
+    const y = (dropY * scaleFactor) / zoom;
 
     console.log("Signature dropped at:", { x, y, page: pageNumber - 1 });
 
@@ -1356,61 +1372,61 @@ const SigningPage = () => {
 
   if (signed) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-12">
+      <div className="max-w-2xl mx-auto text-center py-8 sm:py-12 px-1">
         <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
           Document Signed Successfully!
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 text-sm sm:text-base px-2">
           Thank you for signing "{document.title}". All parties will be notified
           when the signing process is complete.
         </p>
-        <div className="flex items-center justify-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto sm:max-w-none">
           <button
             onClick={() => window.open(document.originalUrl, "_blank")}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4 shrink-0" />
             <span>View Original</span>
           </button>
           {(document.signedUrl || document.status === "completed") && (
             <button
               onClick={downloadSignedDocument}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4 shrink-0" />
               <span>Download Signed PDF</span>
             </button>
           )}
-          {!document.signedUrl && document.status !== "completed" && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-              <p className="text-sm text-yellow-700">
-                The signed PDF will be available for download once all
-                recipients have completed signing.
-              </p>
-            </div>
-          )}
         </div>
+        {!document.signedUrl && document.status !== "completed" && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6 text-left max-w-lg mx-auto">
+            <p className="text-sm text-yellow-700">
+              The signed PDF will be available for download once all recipients
+              have completed signing.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="max-w-6xl mx-auto min-w-0">
+      <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 break-words">
             {document.title}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm sm:text-base">
             Hello {recipient.name}, please review and sign this document.
           </p>
 
           {/* Zoom Controls */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Zoom:</span>
-              <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-600 shrink-0">Zoom:</span>
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={handleZoomOut}
                   disabled={zoom <= 0.5}
@@ -1424,7 +1440,7 @@ const SigningPage = () => {
                 </span>
                 <button
                   onClick={handleZoomIn}
-                  disabled={zoom >= 3.0}
+                  disabled={zoom >= (isMobile ? 1.0 : 1.5)}
                   className="p-2 text-gray-600 hover:text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
                   title="Zoom In"
                 >
@@ -1452,10 +1468,7 @@ const SigningPage = () => {
         </div>
 
         {/* Document Preview - All Pages Scrollable */}
-        <div
-          className="border rounded-lg overflow-hidden bg-gray-100 mb-6"
-          style={isMobile ? { width: "600px" } : {}}
-        >
+        <div className="border rounded-lg overflow-hidden bg-gray-100 mb-6 w-full min-w-0 overflow-x-auto">
           {pdfError ? (
             <div className="w-full h-96 flex items-center justify-center bg-gray-50">
               <div className="text-center">
@@ -1472,7 +1485,7 @@ const SigningPage = () => {
               </div>
             </div>
           ) : (
-            <div className="max-h-[800px] overflow-y-auto pdf-container">
+            <div className="max-h-[800px] overflow-y-auto overflow-x-auto min-w-0 pdf-container">
               <Document
                 file={document.originalUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -1483,12 +1496,13 @@ const SigningPage = () => {
                   </div>
                 }
               >
-                {Array.from(new Array(numPages), (el, index) => (
+                {Array.from(new Array(numPages), (_el, index) => (
                   <div
                     key={`page_${index + 1}`}
                     className="relative mb-4 last:mb-0"
                   >
-                    <div
+                    <PdfPageShell
+                      zoom={zoom}
                       className={`relative border border-gray-200 bg-white ${
                         !tempSignature && !signed
                           ? "cursor-crosshair hover:shadow-md"
@@ -1497,6 +1511,113 @@ const SigningPage = () => {
                       onClick={(e) => handlePageClick(e, index + 1)}
                       onDrop={(e) => handlePageDrop(e, index + 1)}
                       onDragOver={handlePageDragOver}
+                      overlays={(cw) => (
+                        <>
+                          {/* Signature placeholders for this page */}
+                          {placeholders
+                            .filter((placeholder) => placeholder.page === index)
+                            .map((placeholder, placeholderIndex) => (
+                              <div
+                                key={placeholderIndex}
+                                className="absolute border-2 border-dashed border-orange-400 bg-orange-50 bg-opacity-90 rounded flex items-center justify-center cursor-pointer hover:bg-orange-100 hover:border-orange-500 transition-all group z-10"
+                                style={signatureOverlayStyle(
+                                  placeholder.x,
+                                  placeholder.y,
+                                  cw,
+                                  baseWidth,
+                                  zoom
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlaceholderClick(placeholder);
+                                }}
+                                title="Click to sign here"
+                              >
+                                <span className="text-orange-600 text-xs font-medium group-hover:text-orange-700">
+                                  Click to Sign
+                                </span>
+                              </div>
+                            ))}
+
+                          {/* Existing signatures overlay for this page */}
+                          {document.signatures
+                            ?.filter(
+                              (sig: any) =>
+                                sig.position?.page === index &&
+                                sig.signerEmail === email
+                            )
+                            .map((signature: any, sigIndex: number) => {
+                              const actualSignatureIndex =
+                                document.signatures.findIndex(
+                                  (s: any) =>
+                                    s.signerEmail === signature.signerEmail &&
+                                    s.signatureData === signature.signatureData &&
+                                    s.position?.page === signature.position?.page &&
+                                    s.position?.x === signature.position?.x &&
+                                    s.position?.y === signature.position?.y
+                                );
+
+                              const isDragging =
+                                draggedSignature === actualSignatureIndex;
+
+                              return (
+                                <div
+                                  key={sigIndex}
+                                  className={`absolute border-2 border-green-400 bg-green-50 rounded p-1 group cursor-move transition-all z-10 ${
+                                    isDragging
+                                      ? "opacity-50 scale-110 z-50"
+                                      : "hover:shadow-lg"
+                                  }`}
+                                  style={signatureOverlayStyle(
+                                    signature.position.x,
+                                    signature.position.y,
+                                    cw,
+                                    baseWidth,
+                                    zoom
+                                  )}
+                                  draggable={!signed}
+                                  onDragStart={(e) =>
+                                    handleSignatureDragStart(
+                                      e,
+                                      actualSignatureIndex,
+                                      signature
+                                    )
+                                  }
+                                  onDragEnd={handleSignatureDragEnd}
+                                  title={
+                                    !signed ? "Drag to reposition signature" : ""
+                                  }
+                                >
+                                  {!signed && (
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Move className="h-2 w-2" />
+                                    </div>
+                                  )}
+                                  <img
+                                    src={signature.signatureData}
+                                    alt="Signature"
+                                    className="w-full h-full object-contain"
+                                  />
+                                  <p className="text-xs text-green-700 text-center mt-1 leading-none">
+                                    {signature.signerName}
+                                  </p>
+                                  {!signed && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeSignature(actualSignatureIndex);
+                                      }}
+                                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                      title="Remove signature"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                        </>
+                      )}
                     >
                       <Page
                         pageNumber={index + 1}
@@ -1507,121 +1628,10 @@ const SigningPage = () => {
                       />
 
                       {/* Page number indicator */}
-                      <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                      <div className="absolute top-2 right-2 z-20 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs pointer-events-none">
                         Page {index + 1} of {numPages}
                       </div>
-
-                      {/* Signature placeholders for this page */}
-                      {placeholders
-                        .filter((placeholder) => placeholder.page === index)
-                        .map((placeholder, placeholderIndex) => {
-                          console.log(
-                            "Rendering placeholder:",
-                            placeholder,
-                            "on page",
-                            index
-                          );
-                          return (
-                            <div
-                              key={placeholderIndex}
-                              className="absolute border-2 border-dashed border-orange-400 bg-orange-50 bg-opacity-90 rounded flex items-center justify-center cursor-pointer hover:bg-orange-100 hover:border-orange-500 transition-all group"
-                              style={{
-                                left: placeholder.x * zoom - 60 * zoom,
-                                top: placeholder.y * zoom - 20 * zoom,
-                                width: `${120 * zoom}px`,
-                                height: `${40 * zoom}px`,
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlaceholderClick(placeholder);
-                              }}
-                              title="Click to sign here"
-                            >
-                              <span className="text-orange-600 text-xs font-medium group-hover:text-orange-700">
-                                Click to Sign
-                              </span>
-                            </div>
-                          );
-                        })}
-
-                      {/* Existing signatures overlay for this page */}
-                      {document.signatures
-                        ?.filter(
-                          (sig: any) =>
-                            sig.position?.page === index &&
-                            sig.signerEmail === email
-                        )
-                        .map((signature: any, sigIndex: number) => {
-                          // Find the actual index in the full signatures array
-                          const actualSignatureIndex =
-                            document.signatures.findIndex(
-                              (s: any) =>
-                                s.signerEmail === signature.signerEmail &&
-                                s.signatureData === signature.signatureData &&
-                                s.position?.page === signature.position?.page &&
-                                s.position?.x === signature.position?.x &&
-                                s.position?.y === signature.position?.y
-                            );
-
-                          const isDragging =
-                            draggedSignature === actualSignatureIndex;
-
-                          return (
-                            <div
-                              key={sigIndex}
-                              className={`absolute border-2 border-green-400 bg-green-50 rounded p-1 group cursor-move transition-all ${
-                                isDragging
-                                  ? "opacity-50 scale-110 z-50"
-                                  : "hover:shadow-lg"
-                              }`}
-                              style={{
-                                left: signature.position.x * zoom - 60 * zoom,
-                                top: signature.position.y * zoom - 20 * zoom,
-                                width: `${120 * zoom}px`,
-                                height: `${40 * zoom}px`,
-                              }}
-                              draggable={!signed}
-                              onDragStart={(e) =>
-                                handleSignatureDragStart(
-                                  e,
-                                  actualSignatureIndex,
-                                  signature
-                                )
-                              }
-                              onDragEnd={handleSignatureDragEnd}
-                              title={
-                                !signed ? "Drag to reposition signature" : ""
-                              }
-                            >
-                              {!signed && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Move className="h-2 w-2" />
-                                </div>
-                              )}
-                              <img
-                                src={signature.signatureData}
-                                alt="Signature"
-                                className="w-full h-full object-contain"
-                              />
-                              <p className="text-xs text-green-700 text-center mt-1 leading-none">
-                                {signature.signerName}
-                              </p>
-                              {!signed && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeSignature(actualSignatureIndex);
-                                  }}
-                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                  title="Remove signature"
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
+                    </PdfPageShell>
                   </div>
                 ))}
               </Document>
@@ -1629,9 +1639,9 @@ const SigningPage = () => {
           )}
 
           {/* Signature Overlay */}
-          {showSignature && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            {showSignature && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Place Your Signature</h3>
                   <button
@@ -1666,11 +1676,11 @@ const SigningPage = () => {
         {/* Signature Summary and Actions */}
         {document.signatures?.filter((sig: any) => sig.signerEmail === email)
           .length > 0 ? (
-          <div className="bg-green-50 rounded-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-                <div>
+          <div className="bg-green-50 rounded-lg p-4 sm:p-6 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <CheckCircle className="h-6 w-6 text-green-600 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <h3 className="text-lg font-medium text-green-900">
                     {
                       document.signatures?.filter(
@@ -1686,15 +1696,15 @@ const SigningPage = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-green-600">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-green-600 min-w-0">
                 Review your signatures above. You can add more signatures or
                 click finish to complete.
               </p>
               <button
                 onClick={finishSigning}
                 disabled={finishing}
-                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
               >
                 {finishing ? (
                   <>
@@ -1711,14 +1721,12 @@ const SigningPage = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">
-                  Signing as: {recipient.name}
-                </span>
-              </div>
+          <div className="bg-blue-50 rounded-lg p-4 sm:p-6 mb-6">
+            <div className="flex items-start gap-2">
+              <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <span className="text-sm font-medium text-blue-700 break-words">
+                Signing as: {recipient.name}
+              </span>
             </div>
             <div className="mt-2">
               {placeholders.length > 0 ? (

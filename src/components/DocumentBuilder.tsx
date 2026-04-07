@@ -324,34 +324,34 @@ const DocumentBuilder = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="max-w-7xl mx-auto min-w-0">
+      <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
           <input
             type="text"
             value={documentTitle}
             onChange={(e) => setDocumentTitle(e.target.value)}
-            className="text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2"
+            className="text-xl sm:text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 w-full min-w-0"
             placeholder="Document Title"
           />
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto shrink-0">
             <button
               onClick={downloadPDF}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4 shrink-0" />
               <span>Download PDF</span>
             </button>
             <button
               onClick={saveAndUseForSigning}
               disabled={saving}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center space-x-2"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {saving ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4 shrink-0" />
               )}
               <span>{saving ? "Saving..." : "Save & Use for Signing"}</span>
             </button>
@@ -512,7 +512,7 @@ const DocumentBuilder = () => {
             </div>
 
             {/* Slide Preview */}
-            <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100 p-4">
+            <div className="border-2 border-gray-300 rounded-lg overflow-x-auto bg-gray-100 p-2 sm:p-4">
               <div
                 className="bg-white shadow-lg mx-auto"
                 style={{

@@ -17,7 +17,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-gray-50">
           <Header />
-          <main className="container mx-auto px-4 py-8">
+          <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-full min-w-0">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/upload" element={<DocumentUpload />} />

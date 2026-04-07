@@ -124,11 +124,13 @@ const AiGenerator: React.FC = () => {
     d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
-      style={{ height: "calc(100vh - 112px)" }}>
+    <div
+      className="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 min-h-0"
+      style={{ height: "min(100dvh - 5rem, calc(100vh - 112px))" }}
+    >
 
       {/* ── Header ── */}
-      <div className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex-shrink-0">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex-shrink-0">
         <div className="bg-white/20 p-2 rounded-full">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
@@ -166,7 +168,7 @@ const AiGenerator: React.FC = () => {
 
             {/* Bubble + doc card */}
             <div
-              className={`flex flex-col gap-2 max-w-[76%] ${
+              className={`flex flex-col gap-2 max-w-[min(100%,85vw)] sm:max-w-[76%] ${
                 msg.role === "user" ? "items-end" : "items-start"
               }`}
             >
@@ -182,7 +184,7 @@ const AiGenerator: React.FC = () => {
 
               {/* PDF Download Card */}
               {msg.document && (
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm w-72">
+                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm w-full max-w-sm">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="bg-red-50 border border-red-100 p-2.5 rounded-lg flex-shrink-0">
                       <FileText className="w-5 h-5 text-red-500" />
