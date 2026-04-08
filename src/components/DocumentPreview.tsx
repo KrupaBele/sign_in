@@ -1847,7 +1847,7 @@ const DocumentPreview = () => {
                                 return (
                                   <div
                                     key={sigIndex}
-                                    className={`absolute border-2 border-blue-300 bg-blue-50 rounded p-1 group cursor-move transition-all z-10 ${
+                                    className={`absolute border-2 border-transparent bg-transparent rounded p-1 group cursor-move transition-all z-10 ${
                                       isDragging
                                         ? "opacity-50 scale-110 z-50"
                                         : "hover:shadow-lg"
@@ -1880,7 +1880,7 @@ const DocumentPreview = () => {
                                   >
                                     {signature.signerEmail === userEmail &&
                                       currentDocument.status === "draft" && (
-                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                           <Move className="h-2 w-2" />
                                         </div>
                                       )}
@@ -1889,7 +1889,7 @@ const DocumentPreview = () => {
                                       alt="Signature"
                                       className="w-full h-full object-contain"
                                     />
-                                    <p className="text-xs text-blue-700 text-center mt-1 leading-none">
+                                    <p className="text-xs text-gray-600 text-center mt-1 leading-none drop-shadow-sm">
                                       {signature.signerName}
                                     </p>
                                     {signature.signerEmail === userEmail &&
