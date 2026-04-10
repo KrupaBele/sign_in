@@ -263,7 +263,7 @@ const AiGenerator: React.FC = () => {
             </div>
 
             <div
-              className={`flex flex-col gap-2 max-w-[min(100%,85vw)] sm:max-w-[76%] ${
+              className={`flex flex-col gap-2 w-full max-w-[min(100%,85vw)] sm:max-w-3xl ${
                 msg.role === "user" ? "items-end" : "items-start"
               }`}
             >
